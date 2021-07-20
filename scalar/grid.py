@@ -18,6 +18,8 @@ class Grid:
         # Generate 2D meshgrids:
         self.X, self.Y = cp.meshgrid(cp.arange(-Nx // 2, Nx // 2) * dx, cp.arange(-Ny // 2, Ny // 2) * dy)
 
+        self.squared = self.X ** 2 + self.Y ** 2
+
     def fftshift(self):
         """
         Performs FFT shift on meshgrids.
