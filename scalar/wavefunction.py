@@ -25,6 +25,7 @@ class Wavefunction:
 
         if self.system_type == 'periodic':
             self.psi = cp.sqrt(self.n_0) * cp.exp(1j * phase)
+            self.psi_k = cp.fft.fft2(self.psi)
             self.phase = phase
 
         elif self.system_type == 'trapped':
