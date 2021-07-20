@@ -1,11 +1,11 @@
-import numpy as np
+import cupy as cp
 from scalar import grid
 
 
 class Wavefunction:
-    def __init__(self, grid: grid.Grid, g: float, N: int, system_type: str) -> None:
-        self.psi = np.empty((grid.Nx, grid.Ny), dtype='complex64')
-        self.psi_k = np.empty((grid.Nx, grid.Ny), dtype='complex64')
+    def __init__(self, grid: grid.Grid, g: float, N: float, system_type: str) -> None:
+        self.psi = cp.empty((grid.Nx, grid.Ny), dtype='complex64')
+        self.psi_k = cp.empty((grid.Nx, grid.Ny), dtype='complex64')
         self.g = g
         self.atom_number = N
         self.system_type = system_type  # Trapped or periodic system
@@ -24,7 +24,7 @@ class Wavefunction:
         """
 
         if self.system_type == 'periodic':
-            self.psi = np.sqrt(self.n_0) * np.exp(1j * phase)
+            self.psi = cp.sqrt(self.n_0) * cp.exp(1j * phase)
             self.phase = phase
 
         elif self.system_type == 'trapped':

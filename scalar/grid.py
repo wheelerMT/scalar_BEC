@@ -1,4 +1,4 @@
-import numpy as np
+import cupy as cp
 
 
 class Grid:
@@ -16,11 +16,11 @@ class Grid:
         self.len_x, self.len_y = Nx * dx, Ny * dy
 
         # Generate 2D meshgrids:
-        self.X, self.Y = np.meshgrid(np.arange(-Nx // 2, Nx // 2) * dx, np.arange(-Ny // 2, Ny // 2) * dy)
+        self.X, self.Y = cp.meshgrid(cp.arange(-Nx // 2, Nx // 2) * dx, cp.arange(-Ny // 2, Ny // 2) * dy)
 
     def fftshift(self):
         """
         Performs FFT shift on meshgrids.
         """
-        self.X = np.fft.fftshift(self.X)
-        self.Y = np.fft.fftshift(self.Y)
+        self.X = cp.fft.fftshift(self.X)
+        self.Y = cp.fft.fftshift(self.Y)
