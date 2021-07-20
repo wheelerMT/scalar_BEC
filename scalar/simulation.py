@@ -31,6 +31,10 @@ class Simulation:
 
             self._kinetic_step(wfn, Kgrid)  # Last kinetic step
 
+            wfn.renormalise_atom_num()
+
+            # Add phase fix
+
         self.dt *= 1j   # Switch back to real time
 
     def real_time(self, wfn: Wavefunction, Kgrid: Grid, nt: int):

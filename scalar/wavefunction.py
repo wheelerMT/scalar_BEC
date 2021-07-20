@@ -9,6 +9,7 @@ class Wavefunction:
         self.g = g
         self.atom_number = N
         self.system_type = system_type  # Trapped or periodic system
+        self.dx, self.dy = grid.dx, grid.dy
 
         # If a periodic domain, define periodic domain specific vars
         if system_type == 'periodic':
@@ -30,5 +31,14 @@ class Wavefunction:
 
         elif self.system_type == 'trapped':
             "generate trap initial state"
+
+    def calc_atom_num(self, k_space=False):
+        if k_space:
+            return self.dx * self.dy * cp.sum(cp.abs(cp.fft.ifft2(self.psi_k)) ** 2)
+        else:
+            return self.dx * self.dy * cp.sum(cp.abs(self.psi) ** 2)
+
+    def renormalise_atom_num(self):
+        self.psi_k = cp.fft.fft2(cp.sqrt(self.atom_number) * cp.fft.ifft2(self.psi_k) / self.calc_atom_num(k_space=True))
 
 
