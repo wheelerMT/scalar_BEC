@@ -41,4 +41,9 @@ class Wavefunction:
     def renormalise_atom_num(self):
         self.psi_k = cp.fft.fft2(cp.sqrt(self.atom_number) * cp.fft.ifft2(self.psi_k) / self.calc_atom_num(k_space=True))
 
+    def fix_phase(self):
+        self.psi = cp.fft.ifft2(self.psi_k)
+        self.psi *= cp.exp(1j * self.phase) / cp.exp(1j * cp.angle(self.psi))
+        self.psi_k = cp.fft.fft2(self.psi)
+
 

@@ -33,7 +33,7 @@ class Simulation:
 
             wfn.renormalise_atom_num()
 
-            # Add phase fix
+            wfn.fix_phase()
 
         self.dt *= 1j   # Switch back to real time
 
