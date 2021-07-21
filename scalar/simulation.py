@@ -12,7 +12,7 @@ class Simulation:
         wfn.psi_k *= cp.exp(-0.25 * 1j * self.dt * Kgrid.squared)
 
     def _potential_step(self, wfn: Wavefunction):
-        wfn.psi *= cp.exp(-1j * self.dt * (wfn.g * cp.abs(wfn.psi) ** 2))
+        wfn.psi *= cp.exp(-1j * self.dt * (wfn.V + wfn.g * cp.abs(wfn.psi) ** 2))
 
     def imaginary_time(self, wfn: Wavefunction, Kgrid: Grid, nt: int):
         """Do split-step imaginary time evolution"""
