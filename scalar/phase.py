@@ -3,47 +3,47 @@ import cupy as cp
 import numpy as np
 
 
-def _generate_random_pos(nvort: int, thresh: float, grid: Grid):
-    accepted_pos = []
-    iterations = 0
-    while len(accepted_pos) < nvort:
-        within_range = True
-        while within_range:
-            iterations += 1
-            triggered = False
-
-            # Generate a position
-            pos = cp.random.uniform(-grid.len_x // 2, grid.len_x // 2), \
-                  cp.random.uniform(-grid.len_y // 2, grid.len_y // 2)
-
-            # Check if position is too close to any other position
-            for accepted_position in accepted_pos:
-                if abs(pos[0] - accepted_position[0]) < thresh:
-                    if abs(pos[1] - accepted_position[1]) < thresh:
-                        triggered = True
-                        break
-
-            # If position isn't close to others then add it to accepted positions
-            if not triggered:
-                accepted_pos.append(pos)
-                within_range = False
-
-        # Prints out current progress every 500 iterations
-        if len(accepted_pos) % 500 == 0:
-            print('Found {} positions...'.format(len(accepted_pos)))
-
-    print('Found {} positions in {} iterations.'.format(len(accepted_pos), iterations))
-    return iter(accepted_pos)  # Set accepted positions to member
-
-
 class Phase:
     def __init__(self, nvort: int, thresh: float, grid: Grid, phase_type: str):
         self.phase = None
 
         if phase_type == 'random':
             # If random is chosen, generate random positions then imprint
-            initial_pos = _generate_random_pos(nvort, thresh, grid)
+            initial_pos = self._generate_random_pos(nvort, thresh, grid)
             self._imprint_phase(nvort, grid, initial_pos)
+
+    @staticmethod
+    def _generate_random_pos(nvort: int, thresh: float, grid: Grid):
+        accepted_pos = []
+        iterations = 0
+        while len(accepted_pos) < nvort:
+            within_range = True
+            while within_range:
+                iterations += 1
+                triggered = False
+
+                # Generate a position
+                pos = cp.random.uniform(-grid.len_x // 2, grid.len_x // 2), \
+                      cp.random.uniform(-grid.len_y // 2, grid.len_y // 2)
+
+                # Check if position is too close to any other position
+                for accepted_position in accepted_pos:
+                    if abs(pos[0] - accepted_position[0]) < thresh:
+                        if abs(pos[1] - accepted_position[1]) < thresh:
+                            triggered = True
+                            break
+
+                # If position isn't close to others then add it to accepted positions
+                if not triggered:
+                    accepted_pos.append(pos)
+                    within_range = False
+
+            # Prints out current progress every 500 iterations
+            if len(accepted_pos) % 500 == 0:
+                print('Found {} positions...'.format(len(accepted_pos)))
+
+        print('Found {} positions in {} iterations.'.format(len(accepted_pos), iterations))
+        return iter(accepted_pos)  # Set accepted positions to member
 
     def _imprint_phase(self, nvort: int, grid: Grid, pos: iter):
         # Initialise phase:
