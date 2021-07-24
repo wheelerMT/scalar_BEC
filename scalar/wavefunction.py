@@ -1,9 +1,10 @@
 import cupy as cp
-from scalar import grid
+from grid import Grid
+from phase import Phase
 
 
 class Wavefunction:
-    def __init__(self, grid: grid.Grid, g: float, N: float, system_type: str) -> None:
+    def __init__(self, grid: Grid, g: float, N: float, system_type: str) -> None:
         self.psi = cp.empty((grid.Nx, grid.Ny), dtype='complex64')
         self.psi_k = cp.empty((grid.Nx, grid.Ny), dtype='complex64')
         self.g = g
@@ -16,34 +17,26 @@ class Wavefunction:
             self.n_0 = N / (grid.len_x * grid.len_y)
             self.V = 0  # Periodic box potential
 
-        self.phase = None
+        self.phase = cp.empty((grid.Nx, grid.Ny))
 
-    def generate_initial_state(self, grid: grid.Grid, phase=None):
+    def generate_initial_state(self, grid: Grid, phase: Phase):
         """
         :param grid:
-        :param phase: Array of phase profile.
         """
 
         if self.system_type == 'periodic':
-            self.psi = cp.sqrt(self.n_0) * cp.exp(1j * phase)
+            self._generate_phase(phase)
+            self.psi = cp.sqrt(self.n_0) * cp.exp(1j * self.phase)
             self.psi_k = cp.fft.fft2(self.psi)
-            self.phase = phase
 
         elif self.system_type == 'trapped':
             "generate trap initial state"
+
+    def _generate_phase(self, phase: Phase):
+        self.phase = phase.phase
 
     def calc_atom_num(self, k_space=False):
         if k_space:
             return self.dx * self.dy * cp.sum(cp.abs(cp.fft.ifft2(self.psi_k)) ** 2)
         else:
             return self.dx * self.dy * cp.sum(cp.abs(self.psi) ** 2)
-
-    def renormalise_atom_num(self):
-        self.psi_k = cp.fft.fft2(cp.sqrt(self.atom_number) * cp.fft.ifft2(self.psi_k) / self.calc_atom_num(k_space=True))
-
-    def fix_phase(self):
-        self.psi = cp.fft.ifft2(self.psi_k)
-        self.psi *= cp.exp(1j * self.phase) / cp.exp(1j * cp.angle(self.psi))
-        self.psi_k = cp.fft.fft2(self.psi)
-
-
