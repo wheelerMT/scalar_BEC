@@ -3,6 +3,17 @@ from wavefunction import Wavefunction
 import cupy as cp
 
 
+def _renormalise_atom_num(wfn: Wavefunction):
+    wfn.psi_k = cp.fft.fft2(cp.sqrt(wfn.atom_number) * cp.fft.ifft2(wfn.psi_k)
+                             / cp.sqrt(wfn.calc_atom_num(k_space=True)))
+
+
+def _fix_phase(wfn: Wavefunction):
+    wfn.psi = cp.fft.ifft2(wfn.psi_k)
+    wfn.psi *= cp.exp(1j * wfn.phase) / cp.exp(1j * cp.angle(wfn.psi))
+    wfn.psi_k = cp.fft.fft2(wfn.psi)
+
+
 class Simulation:
     def __init__(self, dt: float, nframe: int):
         self.dt = dt
@@ -20,7 +31,7 @@ class Simulation:
         self.dt *= -1j  # Switch to imaginary time
 
         # Do imaginary time evolution
-        for _ in range(nt):
+        for i in range(nt):
             self._kinetic_step(wfn, Kgrid)  # First Kinetic step
 
             wfn.psi = cp.fft.ifft2(wfn.psi_k)  # Inverse FFT
@@ -31,9 +42,13 @@ class Simulation:
 
             self._kinetic_step(wfn, Kgrid)  # Last kinetic step
 
-            wfn.renormalise_atom_num()
+            _renormalise_atom_num(wfn)
 
-            wfn.fix_phase()
+            _fix_phase(wfn)
+
+            # Print current time:
+            if i % 50 == 0:
+                print(f"t = {i * self.dt}")
 
         self.dt *= 1j   # Switch back to real time
 
@@ -41,7 +56,7 @@ class Simulation:
         """Do split-step real time evolution"""
 
         # Do real time evolution
-        for _ in range(nt):
+        for i in range(nt):
             self._kinetic_step(wfn, Kgrid)  # First Kinetic step
 
             wfn.psi = cp.fft.ifft2(wfn.psi_k)  # Inverse FFT
@@ -51,3 +66,7 @@ class Simulation:
             wfn.psi_k = cp.fft.fft2(wfn.psi)  # Forward FFT
 
             self._kinetic_step(wfn, Kgrid)  # Last kinetic step
+
+            # Print current time:
+            if i % 50 == 0:
+                print(f"t = {i * self.dt}")
