@@ -4,9 +4,46 @@ from phase import Phase
 
 
 class Wavefunction:
-    def __init__(self, grid: Grid, g: float, N: float, system_type: str) -> None:
-        self.psi = cp.empty((grid.Nx, grid.Ny), dtype='complex64')
-        self.psi_k = cp.empty((grid.Nx, grid.Ny), dtype='complex64')
+    """Generates the Wavefunction object. Contains information
+    about the BEC such as interaction strength and atom number.
+
+    Attributes
+    ----------
+    psi : ndarray(complex)
+        2D :obj:`ndarray` containing wavefunction values in position space.
+    psi_k : ndarray(complex)
+        2D :obj:`ndarray` containing wavefunction values in reciprocal space.
+    g : float
+        Interaction strength of condensate.
+    atom_number : int
+        Atom number of condensate.
+    system_type : str
+        Type of system condensate is contained in, e.g. 'periodic' or 'trapped'.
+    dx : float
+        Taken from Grid object - grid spacing in the x-direction.
+    dx : float
+        Taken from Grid object - grid spacing in the y-direction.
+    """
+
+    def __init__(self, grid: Grid, g: float, N: float, system_type: str):
+        """Instantiate a wavefunction object.
+        Sets BEC parameters using the parameters provided. Constructs empty positional
+        and reciprocal wavefunction data arrays.
+
+        Parameters
+        ----------
+        grid : Grid
+            Real-space Grid object for the simulation.
+        g : float
+            Interaction strength of condensate.
+        N : int
+            Atom number of condensate.
+        system_type : str
+            The type of system used within the simulations - e.g., 'periodic' or 'trapped'.
+        """
+
+        self.psi = cp.empty((grid.nx, grid.ny), dtype='complex64')
+        self.psi_k = cp.empty((grid.nx, grid.ny), dtype='complex64')
         self.g = g
         self.atom_number = N
         self.system_type = system_type  # Trapped or periodic system
@@ -17,11 +54,21 @@ class Wavefunction:
             self.n_0 = N / (grid.len_x * grid.len_y)
             self.V = 0  # Periodic box potential
 
-        self.phase = cp.empty((grid.Nx, grid.Ny))
+        self.phase = cp.empty((grid.nx, grid.ny))
 
     def generate_initial_state(self, grid: Grid, phase: Phase):
-        """
-        :param grid:
+        """Generates initial state for the condensate.
+        For a periodic system, it generates a uniform background density coupled
+        with a phase provided from a :class:`Phase` object.
+        For a trapped system, it generates the Thomas-Fermi profile.
+
+        Parameters
+        ----------
+        grid : Grid
+            Real-space Grid object for the simulation.
+        phase : Phase
+            Phase object associated with this wavefunction.
+
         """
 
         if self.system_type == 'periodic':
@@ -30,13 +77,37 @@ class Wavefunction:
             self.psi_k = cp.fft.fft2(self.psi)
 
         elif self.system_type == 'trapped':
-            "generate trap initial state"
+            raise NotImplementedError
 
-    def _generate_phase(self, phase: Phase):
+    def _generate_phase(self, phase: Phase) -> None:
+        """Updates wavefunction phase using :class:`Phase` object.
+
+        Parameters
+        ----------
+        phase : Phase
+            Phase object associated with this wavefunction.
+
+        """
+
         self.phase = phase.phase
 
     def calc_atom_num(self, k_space=False):
+        """Calculates the atom number of the system.
+
+        Parameters
+        ----------
+        k_space : bool
+            Determines whether to use k-space (True) wavefunction or
+            real-space (False) wavefunction to calculate the atom number,
+            defaults to False.
+
+        Returns
+        -------
+        int
+            Atom number of the system.
+        """
+
         if k_space:
-            return self.dx * self.dy * cp.sum(cp.abs(cp.fft.ifft2(self.psi_k)) ** 2)
+            return int(self.dx * self.dy * cp.sum(cp.abs(cp.fft.ifft2(self.psi_k)) ** 2))
         else:
-            return self.dx * self.dy * cp.sum(cp.abs(self.psi) ** 2)
+            return int(self.dx * self.dy * cp.sum(cp.abs(self.psi) ** 2))

@@ -1,19 +1,65 @@
+from typing import Iterator
+
 from grid import Grid
 import cupy as cp
 import numpy as np
 
 
 class Phase:
-    def __init__(self, nvort: int, thresh: float, grid: Grid, phase_type: str):
+    """Generates the phase profile object for a distribution of vortices.
+    Note: currently only random distribution is supported.
+
+    Attributes
+    ----------
+    phase : ndarray
+        2D array of the phase profile.
+
+    """
+
+    def __init__(self, nvort: int, thresh: float, grid: Grid, vortex_distribution: str):
+        """Instantiate a phase object.
+        Generates the phase grid with 2pi windings about each vortex.
+
+        Parameters
+        ----------
+        nvort : int
+            Total number of vortices initially in the system.
+        thresh : float
+            Threshold distance between any two vortices.
+        grid : Grid
+            The grid object associated with the wavefunction.
+        vortex_distribution : str
+            'random' - Defines type of vortex distribution.
+        """
+
         self.phase = None
 
-        if phase_type == 'random':
+        if vortex_distribution == 'random':
             # If random is chosen, generate random positions then imprint
             initial_pos = self._generate_random_pos(nvort, thresh, grid)
             self._imprint_phase(nvort, grid, initial_pos)
 
     @staticmethod
-    def _generate_random_pos(nvort: int, thresh: float, grid: Grid):
+    def _generate_random_pos(nvort: int, thresh: float, grid: Grid) \
+            -> Iterator[tuple[np.ndarray, np.ndarray]]:
+        """Generates random positions using a uniform distribution.
+
+        Parameters
+        ----------
+        nvort : int
+            Total number of vortices initially in the system.
+        thresh : float
+            Threshold distance between any two vortices.
+        grid : Grid
+            The grid object associated with the wavefunction.
+
+        Returns
+        -------
+        Iterator[tuple[np.ndarray, np.ndarray]]
+            Iterator of vortex positions.
+
+        """
+
         accepted_pos = []
         iterations = 0
         while len(accepted_pos) < nvort:
@@ -45,9 +91,23 @@ class Phase:
         print('Found {} positions in {} iterations.'.format(len(accepted_pos), iterations))
         return iter(accepted_pos)  # Set accepted positions to member
 
-    def _imprint_phase(self, nvort: int, grid: Grid, pos: iter):
+    def _imprint_phase(self, nvort: int, grid: Grid, pos: Iterator[tuple[np.ndarray, np.ndarray]]):
+        """Imprints 2pi windings in the phase using the positions provided
+        then updates phase attribute with the result.
+
+        Parameters
+        ----------
+        nvort : int
+            Total number of vortices initially in the system.
+        grid : Grid
+            The grid object associated with the wavefunction.
+        pos : Iterator[tuple[np.ndarray, np.ndarray]]
+            Iterator of vortex positions.
+
+        """
+
         # Initialise phase:
-        theta_tot = cp.empty((grid.Nx, grid.Ny))
+        theta_tot = cp.empty((grid.nx, grid.ny))
 
         # Scale pts:
         x_tilde = 2 * cp.pi * ((grid.X - grid.X.min()) / grid.len_x)
@@ -55,7 +115,7 @@ class Phase:
 
         # Construct phase for this postion:
         for _ in range(nvort):
-            theta_k = cp.zeros((grid.Nx, grid.Ny))
+            theta_k = cp.zeros((grid.nx, grid.ny))
 
             try:
                 x_m, y_m = next(pos)
